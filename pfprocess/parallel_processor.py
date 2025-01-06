@@ -17,8 +17,6 @@ from pfprocess.logging_utils import default_configurer
 from pfprocess.remote_utils import download_url
 from pfprocess.parallel_logging import log_listener, worker_logger_configurer
 
-logger = logging.getLogger(__name__)
-
 
 def _target(func, file_queue, logger_queue):
     if file_queue is None:
@@ -57,6 +55,7 @@ class PFileProcessor:
         save_dp: Optional[Union[str, Path]] = None,
         n_processors: Optional[int] = None,
         queue_length: Optional[int] = None,
+        log_configurer: Optional[Callable] = None,
     ):
         """
         :param func: Callable to process files. It should take a single argument which
@@ -66,6 +65,7 @@ class PFileProcessor:
             downloads directory)
         :param n_processors: Number of spawned worker processes to use
         :queue_length: Number of batches to queue up for the workers
+        :log_configurer: Function for configuring the root logger
         """
 
         self.func = func
@@ -79,7 +79,12 @@ class PFileProcessor:
 
         self.logger_queue = Queue(-1)
         self.file_queue = Queue(self.queue_length)
+
         self.log_listener = None
+        self.log_configurer = (
+            log_configurer if log_configurer is not None else default_configurer
+        )
+        self.logger = logging.getLogger(__name__)
 
     def download_urls(self, urls, save_fn: Optional[str] = None):
         """
@@ -98,37 +103,43 @@ class PFileProcessor:
         for url in urls:
             try:
                 save_fp = download_url(url, self.save_dp, save_fn=save_fn)
-                logger.info(f"Downloaded: {url} -> {save_fp}")
+                self.logger.info(f"Downloaded: {url} -> {save_fp}")
                 success[url] = save_fp
 
             except Exception as e:
-                logger.error(f"Failed to download {url}: {e}")
+                self.logger.error(f"Failed to download {url}: {e}")
                 error[url] = str(e)
 
         return success, error
 
     def _run(self, urls):
         for i, batch in enumerate(urls):
-            logger.info(f"Starting download of url batch {i + 1}/{len(urls)}")
+
+            # TODO even the main process should really log to the queue to avoid danger
+            #  of race conditions if logging with FileHandler
+            self.logger.info(f"Starting download of url batch {i + 1}/{len(urls)}")
             list(batch) if isinstance(batch, (tuple, list)) else [batch]
             success, error = self.download_urls(batch)
 
             if len(error) > 0:
-                logger.error(f"{len(error)} urls failed to download, skipping batch")
+                self.logger.error(
+                    f"{len(error)} urls failed to download, skipping batch"
+                )
                 continue
 
             # add filepaths to processing queue
             self.file_queue.put(list(success.values()))
 
         self.file_queue.put(None)  # end condition
-        logger.info("All slots successfully downloaded. Producer ending.")
+        self.logger.info("All slots successfully downloaded. Producer ending.")
 
     def run(self, urls: Union[List[str], List[List[str]]]):
         """
         Download and process a list of urls or a list of url batches
         """
+
         self.log_listener = Process(
-            target=log_listener, args=(self.logger_queue, default_configurer)
+            target=log_listener, args=(self.logger_queue, self.log_configurer)
         )
         self.log_listener.start()
         workers = [
