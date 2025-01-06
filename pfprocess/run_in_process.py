@@ -13,8 +13,8 @@ from typing import Any, Optional, Callable
 
 
 sys.path.append(str(Path(__file__).parent))
-from downloadprocess.logging_utils import default_configurer
-from downloadprocess.multithread_logging import worker_logger_configurer, log_listener
+from pfprocess.logging_utils import default_configurer
+from pfprocess.parallel_logging import worker_logger_configurer, log_listener
 
 
 class RunInProcessError(Exception):
@@ -70,11 +70,10 @@ def run_in_process(
     # hit an error in the extract points function and the result will be False.
     success = connr.poll(0)
 
-    if not success:  # we hit an error
+    if not success:
         # TODO extract traceback information on the error from the running process
         raise RunInProcessError
-
-    else:  # get the value
+    else:
         ret = connr.recv()
 
     return ret

@@ -3,7 +3,7 @@
 Created By: Rowan Temple
 Created Date: 03/12/2024
 
-Module contents ...
+Example use of queued multiprocess logging
 """
 
 import multiprocessing
@@ -14,8 +14,8 @@ from pathlib import Path
 from random import randint
 
 sys.path.append(str(Path(__file__).parent.parent))
-from downloadprocess.logging_utils import default_configurer
-from downloadprocess.multithread_logging import worker_logger_configurer, log_listener
+from pfprocess.logging_utils import default_configurer
+from pfprocess.parallel_logging import worker_logger_configurer, log_listener
 
 
 def worker_process(logger_queue, n):

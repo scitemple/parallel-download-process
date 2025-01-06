@@ -14,7 +14,7 @@ from pathlib import Path
 from random import randint
 
 sys.path.append(str(Path(__file__).parent.parent))
-from downloadprocess.run_in_process import run_in_process
+from pfprocess.run_in_process import run_in_process
 
 
 def target(n):

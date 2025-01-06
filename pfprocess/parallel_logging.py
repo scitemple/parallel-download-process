@@ -2,7 +2,7 @@
 """
 Multiprocess logging
 
-Inspiration from
+Follows basic pattern from
 https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
 
 Example use
@@ -61,7 +61,7 @@ def worker_logger_configurer(queue: Queue):
 
 def log_listener(queue: Queue, configurer: Callable, *args, **kwargs):
     """
-    Listener handler for logging events
+    Listener for logging events
 
     :param queue: multiprocessing queue for logging events
     :param configurer: a function to configure the root logger
