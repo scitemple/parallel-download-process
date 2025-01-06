@@ -20,6 +20,7 @@ from pfprocess.parallel_processor import PFileProcessor
 
 logger = logging.getLogger(__name__)
 
+
 def _scrape_urls(base_url):
     try:
         response = requests.get(base_url)
