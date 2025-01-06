@@ -9,3 +9,7 @@ through to the main process.
 ## Getting started
 See [example_pfprocess.py](./examples/example_pfprocess.py) for an example of 
 using `PFileProcessor`.
+
+## To do
+* Add setup.py and tests
+* Download process to log to queue also.
